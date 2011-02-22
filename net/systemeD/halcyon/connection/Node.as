@@ -1,5 +1,7 @@
 package net.systemeD.halcyon.connection {
 
+    import flash.geom.Point;
+    
     import net.systemeD.halcyon.connection.actions.*;
 
     public class Node extends Entity {
@@ -28,6 +30,14 @@ package net.systemeD.halcyon.connection {
 
         public function get lon():Number {
             return _lon;
+        }
+        
+        public function get lonlatp():Point {
+        	return new Point(lon, latp);
+        }
+
+        public function get lonlat():Point {
+            return new Point(lon, lat);
         }
 
         private function setLatLonImmediate(lat:Number, lon:Number):void {

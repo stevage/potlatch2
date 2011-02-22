@@ -1,5 +1,6 @@
 package net.systemeD.halcyon.connection {
     import flash.geom.Point;
+    import flash.geom.Rectangle;
     
     import net.systemeD.halcyon.connection.actions.*;
 
@@ -43,6 +44,8 @@ package net.systemeD.halcyon.connection {
 			edge_t=Math.max(edge_t,node.lat);
 		}
 		
+		/** True if the bounding box for the way intersects the given rectangle. This means false
+		 * positives, for example if the way does a horseshoe bend around the outside of the rectangle. */
 		public override function within(left:Number,right:Number,top:Number,bottom:Number):Boolean {
 			if (!edge_l ||
 				(edge_l<left   && edge_r<left  ) ||
@@ -52,14 +55,17 @@ package net.systemeD.halcyon.connection {
 			return true;
 		}
 
+        /** Returns the Node by index. */
         public function getNode(index:uint):Node {
             return nodes[index];
         }
 
+        /** @return nodes[0] */
         public function getFirstNode():Node {
             return nodes[0];
         }
 
+		/** @return nodes[node.length-1] */
 		public function getLastNode():Node {
 			return nodes[nodes.length-1];
 		}
@@ -87,31 +93,36 @@ package net.systemeD.halcyon.connection {
             // What should happen for very short lengths?      
         }
 
+        /** Stick an extra node at the given location. */
         public function insertNode(index:uint, node:Node, performAction:Function):void {
 			if (index>0 && getNode(index-1)==node) return;
 			if (index<nodes.length-1 && getNode(index)==node) return;
 			performAction(new AddNodeToWayAction(this, node, nodes, index, false));
         }
 
+        /** Stick an extra node at the end. */
         public function appendNode(node:Node, performAction:Function):uint {
 			if (node!=getLastNode()) performAction(new AddNodeToWayAction(this, node, nodes, -1));
             return nodes.length + 1;
         }
         
+        /** Stick an extra node at the start. */
         public function prependNode(node:Node, performAction:Function):uint {
 			if (node!=getFirstNode()) performAction(new AddNodeToWayAction(this, node, nodes, 0));
             return nodes.length + 1;
         }
         
-        // return the index of the Node, or -1 if not found
+        /** Return the index of the Node, or -1 if not found */
         public function indexOfNode(node:Node):int {
             return nodes.indexOf(node);
         }
 
+		/** Does the way have this Node once, and once only? */
 		public function hasOnceOnly(node:Node):Boolean {
 			return nodes.indexOf(node)==nodes.lastIndexOf(node);
 		}
 		
+		/** Does the way have any nodes that are .locked? */
 		public function hasLockedNodes():Boolean {
 			for each (var node:Node in nodes) {
 				if (node.locked) { return true; }
@@ -239,11 +250,13 @@ package net.systemeD.halcyon.connection {
                      " "+nodes.map(function(item:Node,index:int, arr:Array):String {return item.id.toString();}).join(",");
         }
 
+		/** Is this way a closed loop? */
 		public function isArea():Boolean {
 			if (nodes.length==0) { return false; }
 			return (nodes[0].id==nodes[nodes.length-1].id && nodes.length>2);
 		}
 		
+		/** Is that the first or last node of this way? */
 		public function endsWith(node:Node):Boolean {
 			return (nodes[0]==node || nodes[nodes.length-1]==node);
 		}
@@ -295,10 +308,12 @@ package net.systemeD.halcyon.connection {
 			return (deleted || (nodes.length==0));
 		}
 
+		/** @return 'way' */
 		public override function getType():String {
 			return 'way';
 		}
 		
+		/** Is this way a 'way' (yes), a 'line' (if not closed), or an 'area' (if closed)? */
 		public override function isType(str:String):Boolean {
 			if (str=='way') return true;
 			if (str=='line' && !isArea()) return true;
@@ -324,7 +339,6 @@ package net.systemeD.halcyon.connection {
 			}
 			return null;
 		}
-
 		public function intersects(left:Number,right:Number,top:Number,bottom:Number):Boolean {
 			// simple test first: are any nodes contained?
 			for (var i:uint=0; i<nodes.length; i++) {
@@ -369,6 +383,22 @@ package net.systemeD.halcyon.connection {
 			return (topoverlap<botoverlap) && (!((botoverlap<t) || (topoverlap>b)));
 		}
 
+
+		/** Return list of nodes that the two ways have in common. */
+		public function getJunctionsWith(way2: Way): Array {
+			var js: Array = [];
+			for (var i:uint = 0; i < length; i++) {
+				if (way2.indexOfNode(nodes[i]) > 0) {
+					js.push(nodes[i]);
+				}
+			}
+			return js;
+		}
+		
+		/** Returns the smallest rectangle that the way fits into. */
+		public function get boundingBox(): Rectangle {
+			return new Rectangle(edge_l, edge_t, edge_r-edge_l, edge_t-edge_b);
+		}
 
     }
 }

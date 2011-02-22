@@ -355,14 +355,14 @@ package net.systemeD.halcyon.connection {
             return list;
         }
 
-		public function getObjectsByBbox(left:Number, right:Number, top:Number, bottom:Number):Object {
-			var o:Object = { poisInside: [], poisOutside: [], waysInside: [], waysOutside: [],
+		public function getObjectsByBbox(left:Number, right:Number, top:Number, bottom:Number, wantWays: Boolean = true, wantPois: Boolean = true):Object {
+            var o:Object = { poisInside: [], poisOutside: [], waysInside: [], waysOutside: [],
                               markersInside: [], markersOutside: [] };
-			for each (var way:Way in ways) {
+			if (wantWays) for each (var way:Way in ways) {
 				if (way.within(left,right,top,bottom)) { o.waysInside.push(way); }
 				                                  else { o.waysOutside.push(way); }
 			}
-			for each (var poi:Node in pois) {
+			if (wantPois) for each (var poi:Node in pois) {
 				if (poi.within(left,right,top,bottom)) { o.poisInside.push(poi); }
 				                                  else { o.poisOutside.push(poi); }
 			}

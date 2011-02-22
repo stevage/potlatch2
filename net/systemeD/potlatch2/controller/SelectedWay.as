@@ -7,7 +7,8 @@ package net.systemeD.potlatch2.controller {
 	import net.systemeD.halcyon.MapPaint;
 	import net.systemeD.halcyon.connection.*;
 	import net.systemeD.potlatch2.tools.Quadrilateralise;
-	import net.systemeD.potlatch2.tools.Simplify;
+    import net.systemeD.potlatch2.tools.Simplify;
+	import net.systemeD.potlatch2.tools.MakeJunctions;
 
     /** Behaviour that takes place while a way is selected includes: adding a node to the way, straightening/reshaping the way, dragging it. */
     public class SelectedWay extends ControllerState {
@@ -84,6 +85,7 @@ package net.systemeD.potlatch2.controller {
 					case 89:  /* Y */       Simplify.simplify(firstSelected as Way, controller.map, true); return this;
 					case 188: /* , */       return new SelectedWayNode(initWay, initIndex); // allows navigating from one way to another by keyboard
 					case 190: /* . */       return new SelectedWayNode(initWay, initIndex); //  using <, > and /           
+                    case 74:  /* J */           return addJunctions();           
 				}
 			}
 			var cs:ControllerState = sharedKeyboardEvents(event);
@@ -135,6 +137,14 @@ package net.systemeD.potlatch2.controller {
         /** @return "SelectedWay" */
         override public function toString():String {
             return "SelectedWay";
+        }
+        
+        /** Create junctions anywhere this way crosses another way without a junction. */
+        private function addJunctions():ControllerState {
+        	// TODO if two junctions are selected, only look for intersections between those two
+        	new MakeJunctions(firstSelected as Way);
+        	controller.map.setHighlightOnNodes(firstSelected as Way, { selectedway: true });
+        	return this;
         }
 
     }
