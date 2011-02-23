@@ -113,7 +113,7 @@ package net.systemeD.potlatch2.tools {
 								}  
 							}
 							if (makejunction) {
-								var obj = {w: w, lat: z.y, lon: z.x};
+								var obj:Object = {w: w, lat: z.y, lon: z.x};
 								junctions.push(obj);
 								/*if (!qr.intersects(pr)) {
 									trace(qr + " doesn't intersect " + pr);
