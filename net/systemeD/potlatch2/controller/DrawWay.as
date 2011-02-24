@@ -341,7 +341,7 @@ package net.systemeD.potlatch2.controller {
 		}
 		
 		protected function magicRoundabout():void {
-			//var undo:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout");
+			var undo:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout");
 			//new MagicRoundabout(currentNode(), elastic.length, undo.push);
 			// TODO get the composite undo happening. It confused the hell out of me (SB).
 			new MagicRoundabout(currentNode(), elastic.length, MainUndoStack.getGlobalStack().addAction);
