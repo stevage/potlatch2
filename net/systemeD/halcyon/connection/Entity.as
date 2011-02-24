@@ -14,7 +14,7 @@ package net.systemeD.halcyon.connection {
         private var _version:uint;
         private var _uid:Number;
         private var _timestamp:String;
-        private var tags:Object = {};
+        private var tags:Object = {}; // associative array of key = "value" pairs.
         private var modified:Boolean = false;
         private var _loaded:Boolean = true;
         private var parents:Dictionary = new Dictionary();

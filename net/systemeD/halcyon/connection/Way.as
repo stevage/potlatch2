@@ -149,6 +149,14 @@ package net.systemeD.halcyon.connection {
             markDirty();
         }
 
+        public function deleteNodesTo(end:int, performAction:Function):void {
+            for (;end >= 0; end --)
+                performAction(new RemoveNodeByIndexAction(this, nodes, 0));
+                
+            markDirty();
+        }
+
+
 		/** Merges another way into this one, removing the other one. */
 		public function mergeWith(way:Way,topos:int,frompos:int, performAction:Function):void {
 			performAction(new MergeWaysAction(this, way, topos, frompos));
