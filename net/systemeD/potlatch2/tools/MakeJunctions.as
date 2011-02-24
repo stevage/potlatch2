@@ -4,7 +4,8 @@ package net.systemeD.potlatch2.tools {
     
     import net.systemeD.halcyon.connection.*;
 	
-	/** Tool that automatically creates junctions between the given way and any ways that it crosses. */
+	/** Tool that automatically creates junctions between the given way and any ways that it crosses. Can also be used
+	 * internally by other functions to create junctions and return them as a list. */
 	public class MakeJunctions	{
 		private var way: Way;
 		private var connection: Connection;
@@ -17,6 +18,10 @@ package net.systemeD.potlatch2.tools {
 		public function MakeJunctions(initWay: Way, initOnlyTransportTags: Boolean = true) {
 			way = initWay;
 			onlyTransportTags = initOnlyTransportTags;
+		}
+		
+		/** @return List of newly created junction nodes. */
+		public function run(): Array{	
 			fetchWays();
 			
 			var p0: Point = way.getNode(i).lonlat;
@@ -26,13 +31,16 @@ package net.systemeD.potlatch2.tools {
 			   intersections = intersections.concat(FindIntersectionsForSegment(p0,p1));
 			   p0 = p1;
 			}
+			var nodes: Array=[];
 			for each (var intersection:Object in intersections) {
 	            var undo:CompositeUndoableAction = new CompositeUndoableAction("Auto-create junction");
 	            var node:Node = connection.createNode({}, intersection.lat, intersection.lon, undo.push);
 	            var index:int = way.insertNodeAtClosestPosition(node, false, undo.push);
 	            intersection.w.insertNodeAtClosestPosition(node, false, undo.push);
 	            MainUndoStack.getGlobalStack().addAction(undo);
+	            nodes.push(node);
 	        }
+	        return nodes;
 		}
 		
 		/** Pre-fetch all the ways that the target way could cross, and filter them down if necessary. */

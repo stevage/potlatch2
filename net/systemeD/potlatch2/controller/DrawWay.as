@@ -1,13 +1,14 @@
 package net.systemeD.potlatch2.controller {
+	import flash.display.DisplayObject;
 	import flash.events.*;
 	import flash.geom.*;
-	import flash.display.DisplayObject;
 	import flash.ui.Keyboard;
-	import net.systemeD.potlatch2.EditController;
-	import net.systemeD.halcyon.connection.*;
-    import net.systemeD.halcyon.connection.actions.*;
+	
 	import net.systemeD.halcyon.Elastic;
 	import net.systemeD.halcyon.MapPaint;
+	import net.systemeD.halcyon.connection.*;
+	import net.systemeD.halcyon.connection.actions.*;
+	import net.systemeD.potlatch2.tools.MagicRoundabout;
 
 	public class DrawWay extends SelectedWay {
 		private var elastic:Elastic;
@@ -180,6 +181,7 @@ package net.systemeD.potlatch2.controller {
 				case 79: /* O */			return replaceNode();
 				case 82: /* R */            repeatTags(firstSelected); return this;
 				case 70: /* F */            followWay(); return this;
+				case 77: /* M */            magicRoundabout(); return keyExitDrawing();
 			}
 			var cs:ControllerState = sharedKeyboardEvents(event);
 			return cs ? cs : this;
@@ -241,20 +243,26 @@ package net.systemeD.potlatch2.controller {
 				Way(firstSelected).prependNode(node, performAction);
 		}
 		
+		protected function currentNode(): Node {
+            if (editEnd) {
+                return Way(firstSelected).getLastNode();
+            } else {
+                return Way(firstSelected).getNode(0);
+            }
+		}
+		
 		protected function backspaceNode(performAction:Function):ControllerState {
 			if (selectedWay.length==1) return keyExitDrawing();
 
-			var node:Node;
+			var node:Node = currentNode();
 			var undo:CompositeUndoableAction = new CompositeUndoableAction("Remove node");
 			var newDraw:int;
             var state:ControllerState;
 
 			if (editEnd) {
-				node=Way(firstSelected).getLastNode();
 				Way(firstSelected).removeNodeByIndex(Way(firstSelected).length-1, undo.push);
 				newDraw=Way(firstSelected).length-2;
 			} else {
-				node=Way(firstSelected).getNode(0);
 				Way(firstSelected).removeNodeByIndex(0, undo.push);
 				newDraw=0;
 			}
@@ -330,6 +338,14 @@ package net.systemeD.potlatch2.controller {
 
 			// recentre the map if the new lat/lon is offscreen
 			controller.map.scrollIfNeeded(nextNode.lat,nextNode.lon);
+		}
+		
+		protected function magicRoundabout():void {
+			//var undo:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout");
+			//new MagicRoundabout(currentNode(), elastic.length, undo.push);
+			// TODO get the composite undo happening. It confused the hell out of me (SB).
+			new MagicRoundabout(currentNode(), elastic.length, MainUndoStack.getGlobalStack().addAction);
+            MainUndoStack.getGlobalStack().addAction(undo);
 		}
 		
 		override public function enterState():void {

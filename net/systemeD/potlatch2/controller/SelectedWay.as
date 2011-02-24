@@ -142,7 +142,7 @@ package net.systemeD.potlatch2.controller {
         /** Create junctions anywhere this way crosses another way without a junction. */
         private function addJunctions():ControllerState {
         	// TODO if two junctions are selected, only look for intersections between those two
-        	new MakeJunctions(firstSelected as Way);
+        	new MakeJunctions(firstSelected as Way).run();
         	controller.map.setHighlightOnNodes(firstSelected as Way, { selectedway: true });
         	return this;
         }
