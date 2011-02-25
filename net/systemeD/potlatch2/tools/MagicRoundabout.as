@@ -34,7 +34,7 @@ package net.systemeD.potlatch2.tools
 		
         }
 		
-		private function makeCircle() {
+		private function makeCircle():Array {
             // Pick a number of nodes vaguely in proportion to the size of circle
             var num_nodes: int = Math.pow(radius, 1/2) * 1000;
             var nodes:Array = [];
@@ -54,7 +54,7 @@ package net.systemeD.potlatch2.tools
             return nodes;
 		}
 		
-		private function findWayTags() {
+		private function findWayTags():Object {
             var max_highway: int = -1;
             var highway_hierarchy: Array = ["track", "service", "residential", "unclassified", "tertiary_link", "tertiary", 
             "secondary_link", "secondary", "primary_link", "primary", "trunk_link", "trunk", "motorway_link", "motorway"];
@@ -79,7 +79,7 @@ package net.systemeD.potlatch2.tools
 
 		}
 		
-		private function doJunctions(way: Way) {
+		private function doJunctions(way: Way):void {
 /*          
             // This is an altenative algorithm to what's below. I think
             // they both work. This splits any ways that touch the centre of the roundabout
@@ -113,7 +113,7 @@ package net.systemeD.potlatch2.tools
                     // Split it...
                     performAction(new SplitWayAction(w, w.indexOfNode(j)));
                     // Now j has three parent ways. We find the one that leads back to our home node, and delete it.
-                    for each (var w2 in j.parentWays) {
+                    for each (var w2:Way in j.parentWays) {
                         if (w2.indexOfNode(node) >= 0) {
                             w2.remove(performAction);
                             break;
