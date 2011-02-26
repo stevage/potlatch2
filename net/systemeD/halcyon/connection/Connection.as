@@ -449,12 +449,16 @@ package net.systemeD.halcyon.connection {
             return traces;
         }
 
+        /** Register one more node at this lat/long. If there are 2+, we have a "dupe". */
         public function addDupe(node:Node):void {
             if (getNode(node.id) != node) { return; } // make sure it's on this connection
             var a:String = node.lat+","+node.lon;
             if(!nodePositions[a]) {
-              nodePositions[a] = [];
+              nodePositions[a] = [node];
+              return;
             }
+            if (nodePositions[a].indexOf(node)>= 0) // avoid false dupes
+              return;
             nodePositions[a].push(node);
             if (nodePositions[a].length > 1) { // don't redraw if it's the only node in town
               for each (var n:Node in nodePositions[a]) {
@@ -463,6 +467,7 @@ package net.systemeD.halcyon.connection {
             }
         }
 
+        /** De-register one node from this lat/long. */
         public function removeDupe(node:Node):void {
             if (getNode(node.id) != node) { return; } // make sure it's on this connection
             var a:String = node.lat+","+node.lon;
@@ -478,6 +483,7 @@ package net.systemeD.halcyon.connection {
             if (redraw) { node.dispatchEvent(new Event(Connection.NODE_ALTERED)); } //redraw the one being moved
         }
 
+        /** How many nodes share this lat/lon? */
         public function nodesAtPosition(lat:Number, lon:Number):uint {
             if (nodePositions[lat+","+lon]) {
               return nodePositions[lat+","+lon].length;
@@ -485,6 +491,7 @@ package net.systemeD.halcyon.connection {
             return 0;
         }
 
+        /** Which nodes share this lat/lon? */
         public function getNodesAtPosition(lat:Number, lon:Number):Array {
             if (nodePositions[lat+","+lon]) {
               return nodePositions[lat+","+lon];
