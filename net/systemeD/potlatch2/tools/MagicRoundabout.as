@@ -22,21 +22,22 @@ package net.systemeD.potlatch2.tools
             var nodes: Array = makeCircle();
             var way_tags:Object = findWayTags();
             
-            var way:Way = connection.createWay(way_tags, nodes, performAction);
             
+            var way:Way = connection.createWay(way_tags, nodes, performAction);
             // Split any ways that cross the centre of the roundabout.
             for each (var w: Way in node.parentWays) {
             	if (!w.endsWith(node))
             	  performAction(new SplitWayAction(w, w.indexOfNode(node)));
             }
-            
+            doRelations(way); // Must be after the split above, and before the splits below.
             doJunctions(way);
 		
         }
 		
 		private function makeCircle():Array {
             // Pick a number of nodes vaguely in proportion to the size of circle
-            var num_nodes: int = Math.pow(radius, 1/2) * 1000;
+            // This should really be linear but someone will complain about huge numbers of nodes being created. 
+            var num_nodes: int = Math.pow(radius, 1/2) * 1400;
             var nodes:Array = [];
             // Go around the circle, creating nodes. The .0001 is to avoid floating point
             // inaccuracy leading to a duplicated final node.
@@ -54,6 +55,7 @@ package net.systemeD.potlatch2.tools
             return nodes;
 		}
 		
+		/** Find way tags to put on the new way, based on the highest rank of roads connected to it. */
 		private function findWayTags():Object {
             var max_highway: int = -1;
             var highway_hierarchy: Array = ["track", "service", "residential", "unclassified", "tertiary_link", "tertiary", 
@@ -79,29 +81,9 @@ package net.systemeD.potlatch2.tools
 
 		}
 		
+		/** Locate intersections with any roads, and split and remove those inside the roundabout. */
 		private function doJunctions(way: Way):void {
-/*          
-            // This is an altenative algorithm to what's below. I think
-            // they both work. This splits any ways that touch the centre of the roundabout
-            // then removes all the nodes
-            // between there and the centre.
-            
-            var junctions: Array = new MakeJunctions(way, true).run();
-            
-            for each (var j: Node in junctions) {
-                for each (var w: Way in j.parentWays) {
-                    if (w.indexOfNode(node) < 0)
-                      continue;
-                    if (w.indexOfNode(node) > w.indexOfNode(j)) {
-                        w.deleteNodesFrom(w.indexOfNode(node), performAction);
-                    }  else {
-                        w.deleteNodesTo(w.indexOfNode(j)-1, performAction);
-                    }
-                }
-            }
-            
-  */          
-            
+           
             // Form junctions where the roundabout hits other ways.
             var junctions: Array = new MakeJunctions(way, performAction, true).run();
             // Now find any of those ways that connected with the centre of the roundabout.
@@ -122,6 +104,23 @@ package net.systemeD.potlatch2.tools
                 }
             }
 			
+		}
+		
+		/** Find on connected ways, and add any that belongs to at least two ways. Only deals with "route" relations atm. */
+		private function doRelations(way: Way): void{
+			var relcount: Object= {};
+			for each (var w: Way in node.parentWays) {
+				for each (var r: Relation in w.findParentRelationsOfType("route")) {
+					if (!relcount[r.id])
+					   relcount[r.id]=0;
+    			    relcount[r.id]++;
+				}
+			}
+			for (var rid: String in relcount) {
+				if (relcount[rid] >= 2) {
+					connection.getRelation(new Number(rid)).insertMember(0, new RelationMember(way, "" /* ?! */), performAction);
+				}
+			}
 		}
 
 	}

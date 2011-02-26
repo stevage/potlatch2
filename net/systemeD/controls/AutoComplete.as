@@ -191,6 +191,7 @@ package net.systemeD.controls {
 						selectedIndex=-1;		// nothing selected
 					} else {
 						// show dropdown
+						trace("commitProperties: show drop down");
 						showDropdown = true;
 						selectedIndex = 0;		// first item selected
 					}
@@ -231,6 +232,7 @@ package net.systemeD.controls {
 
 			if (showDropdown && !dropdown.visible) {
 				// controls the open duration of the dropdown
+				trace("must now show dropdown");
 				super.open();
 				showDropdown = false;
 				showingDropdown = true;
@@ -239,6 +241,11 @@ package net.systemeD.controls {
 		}
 	
 		override protected function keyDownHandler(event:KeyboardEvent):void {
+			trace("keyDownHandler."+event.keyCode);
+			if (event.keyCode == 27) {
+				trace("escape!");
+				typedTextChanged=false;
+			}
 			super.keyDownHandler(event);
 
 			if (event.keyCode==Keyboard.UP || event.keyCode==Keyboard.DOWN) {
@@ -250,7 +257,16 @@ package net.systemeD.controls {
 				textInput.text = typedText;
 				textInput.selectRange(textInput.text.length, textInput.text.length);
 				showingDropdown = false;
+				showDropdown = false; 
 				dropdownClosed=true;
+				
+                        dropdownClosed=true;
+                        showDropdown=false;
+                        showingDropdown=false;
+                        selectedIndex=-1;       // nothing selected
+				trace("keyDownHandler: escape");
+				typedTextChanged=false;
+                event.stopImmediatePropagation();
 
 			} else if (event.keyCode == Keyboard.ENTER) {
 				// ENTER pressed, so select the topmost item (if it exists)
