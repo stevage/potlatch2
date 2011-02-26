@@ -17,12 +17,14 @@ package net.systemeD.halcyon.connection {
         public var name:String;
         private var actions:Array = [];
         private var actionsDone:Boolean = false;
+        private var immediateMode:Boolean = false;
 
         /**
         * @param name The name you want to give to this CompositeUndoableAction - useful for debugging
         */
-        public function CompositeUndoableAction(name:String) {
+        public function CompositeUndoableAction(name:String, immediateMode:Boolean=false) {
             this.name = name;
+            this.immediateMode = immediateMode;
         }
 
         /**
@@ -30,6 +32,10 @@ package net.systemeD.halcyon.connection {
         */
         public function push(action:UndoableAction):void {
             actions.push(action);
+            if (immediateMode) {
+                action.doAction();
+                actionsDone = true;
+            }
         }
 
         /**

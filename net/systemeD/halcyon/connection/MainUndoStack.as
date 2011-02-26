@@ -12,21 +12,22 @@ package net.systemeD.halcyon.connection {
     public class MainUndoStack extends EventDispatcher {
         private static const GLOBAL_INSTANCE:MainUndoStack = new MainUndoStack();
         
+        /** The singleton instance. */
         public static function getGlobalStack():MainUndoStack {
             return GLOBAL_INSTANCE;
         }
-        
         private var undoActions:Array = [];
         private var redoActions:Array = [];
 
         /**
-         * Performs the action, then puts it on the undo stack.
+         * Performs the action, then puts it on the undo stack. If it can then be merged with the previous action, that is done.
          *
          * If you want to delay execution don't put it on this
-         * stack -- find another one.
+         * stack -- find another one. If the action has already been excuted and you just want to store
+         * it, set alreadyDone=true.
          */
-        public function addAction(action:UndoableAction):void {
-            var result:uint = action.doAction();
+        public function addAction(action:UndoableAction, alreadyDone: Boolean = false):void {
+            var result:uint = alreadyDone ? UndoableAction.SUCCESS : action.doAction();
             
             switch ( result ) {
             
@@ -69,11 +70,13 @@ package net.systemeD.halcyon.connection {
         }
         
         [Bindable(event="new_undo_item")]
+        /** Is there anything to undo? */
         public function canUndo():Boolean {
             return undoActions.length > 0;
         }
         
         [Bindable(event="new_redo_item")]
+        /** Is there anything to redo? */
         public function canRedo():Boolean {
             return redoActions.length > 0;
         }
