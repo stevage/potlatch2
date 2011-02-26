@@ -142,7 +142,12 @@ package net.systemeD.potlatch2.controller {
         /** Create junctions anywhere this way crosses another way without a junction. */
         private function addJunctions():ControllerState {
         	// TODO if two junctions are selected, only look for intersections between those two
-        	new MakeJunctions(firstSelected as Way).run();
+
+            var junctionsAction:CompositeUndoableAction = new CompositeUndoableAction("Make junctions", true);
+            new MakeJunctions(firstSelected as Way, junctionsAction.push).run();
+            
+            // And when we add the action to the MainUndoStack, we tell it not to do the actions again.
+            MainUndoStack.getGlobalStack().addAction(junctionsAction, true);
         	controller.map.setHighlightOnNodes(firstSelected as Way, { selectedway: true });
         	return this;
         }

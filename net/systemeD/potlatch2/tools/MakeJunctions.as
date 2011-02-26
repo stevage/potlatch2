@@ -2,6 +2,8 @@ package net.systemeD.potlatch2.tools {
     import flash.geom.Point;
     import flash.geom.Rectangle;
     
+    import mx.effects.Fade;
+    
     import net.systemeD.halcyon.connection.*;
 	
 	/** Tool that automatically creates junctions between the given way and any ways that it crosses. Can also be used
@@ -11,13 +13,15 @@ package net.systemeD.potlatch2.tools {
 		private var connection: Connection;
 		private var allWays: Array;
 		private var onlyTransportTags: Boolean;
+		private var performAction: Function;
 		/** Slowly (!) looks for intersections between the given way and others (optionally filtered), then creates junctions for them all. 
 		 * Don't even think about calling this multiple times per second. It has O(NM) running time where N is the number of segments in the
 		 * test way, and M is the total number of segments of all other ways in its bounding box. Performance is adequate for non-pathological
 		 * cases. */
-		public function MakeJunctions(initWay: Way, initOnlyTransportTags: Boolean = true) {
+		public function MakeJunctions(initWay: Way, performAction: Function, initOnlyTransportTags: Boolean = true) {
 			way = initWay;
 			onlyTransportTags = initOnlyTransportTags;
+			this.performAction = performAction;
 		}
 		
 		/** @return List of newly created junction nodes. */
@@ -37,7 +41,7 @@ package net.systemeD.potlatch2.tools {
 	            var node:Node = connection.createNode({}, intersection.lat, intersection.lon, undo.push);
 	            var index:int = way.insertNodeAtClosestPosition(node, false, undo.push);
 	            intersection.w.insertNodeAtClosestPosition(node, false, undo.push);
-	            MainUndoStack.getGlobalStack().addAction(undo);
+	            performAction(undo);
 	            nodes.push(node);
 	        }
 	        return nodes;
