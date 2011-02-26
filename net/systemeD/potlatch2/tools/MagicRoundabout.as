@@ -13,10 +13,10 @@ package net.systemeD.potlatch2.tools
 		 * @param initNode The location that the roundabout will be centred around. Any ways connected to this node will be split.
 		 * @param initRadius Radius of roundabout, in map coords.
 		 * @param performAction The usual undo stack thing. */
-		public function MagicRoundabout(initNode: Node, initRadius: Number, initPerformAction:Function) {
-			node = initNode;
-			radius = initRadius;
-			performAction = initPerformAction;
+		public function MagicRoundabout(node: Node, radius: Number, performAction:Function) {
+			this.node = node;
+			this.radius = radius;
+			this.performAction = performAction;
 			connection = Connection.getConnectionInstance();
 			
             var nodes: Array = makeCircle();
@@ -103,7 +103,7 @@ package net.systemeD.potlatch2.tools
   */          
             
             // Form junctions where the roundabout hits other ways.
-            var junctions: Array = new MakeJunctions(way, true).run();
+            var junctions: Array = new MakeJunctions(way, performAction, true).run();
             // Now find any of those ways that connected with the centre of the roundabout.
             for each (var j: Node in junctions) {
                 for each (var w: Way in j.parentWays) {

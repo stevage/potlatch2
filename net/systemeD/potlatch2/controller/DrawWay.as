@@ -341,11 +341,12 @@ package net.systemeD.potlatch2.controller {
 		}
 		
 		protected function magicRoundabout():void {
-			var undo:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout");
-			//new MagicRoundabout(currentNode(), elastic.length, undo.push);
-			// TODO get the composite undo happening. It confused the hell out of me (SB).
-			new MagicRoundabout(currentNode(), elastic.length, MainUndoStack.getGlobalStack().addAction);
-            MainUndoStack.getGlobalStack().addAction(undo);
+			// MagicRoundabout relies on actions being performed immediately. So we make a
+			// CompositeUndoableAction with the immediate flag on...
+			var roundaboutAction:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout", true);
+			new MagicRoundabout(currentNode(), elastic.length, roundaboutAction.push);
+            // And when we add the action to the MainUndoStack, we tell it not to do the actions again.
+            MainUndoStack.getGlobalStack().addAction(roundaboutAction, true);
 		}
 		
 		override public function enterState():void {
