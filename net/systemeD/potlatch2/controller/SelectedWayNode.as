@@ -8,11 +8,13 @@ package net.systemeD.potlatch2.controller {
 	import net.systemeD.halcyon.connection.*;
 	import net.systemeD.halcyon.connection.actions.*;
 	import net.systemeD.potlatch2.tools.Quadrilateralise;
+    import net.systemeD.potlatch2.tools.MagicRoundabout;
 
     public class SelectedWayNode extends ControllerState {
 		private var parentWay:Way;
 		private var initIndex:int;
 		private var selectedIndex:int;
+		private var mouse: Point;
         
         public function SelectedWayNode(way:Way,index:int) {
             parentWay = way;
@@ -31,6 +33,7 @@ package net.systemeD.potlatch2.controller {
             selection = [node]; parentWay = way;
             controller.updateSelectionUI();
 			selectedIndex = index; initIndex = index;
+			mouse=null;
         }
                 
         protected function clearSelection(newState:ControllerState):void {
@@ -44,7 +47,10 @@ package net.systemeD.potlatch2.controller {
         }
         
         override public function processMouseEvent(event:MouseEvent, entity:Entity):ControllerState {
-			if (event.type==MouseEvent.MOUSE_MOVE || event.type==MouseEvent.ROLL_OVER || event.type==MouseEvent.MOUSE_OUT) { return this; }
+			if (event.type==MouseEvent.MOUSE_MOVE || event.type==MouseEvent.ROLL_OVER || event.type==MouseEvent.MOUSE_OUT) { 
+                with (controller.map) mouse = new Point(coord2lon(event.localX), coord2latp(event.localY));
+                return this; 
+            }
             var focus:Entity = getTopLevelFocusEntity(entity);
 
             if ( event.type == MouseEvent.MOUSE_UP && entity is Node && event.shiftKey ) {
@@ -74,7 +80,8 @@ package net.systemeD.potlatch2.controller {
 				case 82:					repeatTags(firstSelected); return this;	// 'R'
 				case 87:					return new SelectedWay(parentWay);		// 'W'
 				case 191:					return cycleWays();						// '/'
-                case 74:                    if (event.shiftKey) { return unjoin() }; return join();// 'J'
+                case 79:                    if (event.shiftKey) { return unjoin() }; return join();// 'J'
+                case 65:                    return magicRoundabout();               // A
 				case Keyboard.BACKSPACE:	return deleteNode();
 				case Keyboard.DELETE:		return deleteNode();
 				case 188: /* , */           return stepNode(-1);
@@ -246,6 +253,17 @@ package net.systemeD.potlatch2.controller {
             var ni:int = (selectedIndex + delta + parentWay.length) %  parentWay.length
             controller.map.scrollIfNeeded(parentWay.getNode(ni).lat,parentWay.getNode(ni).lon);
             return new SelectedWayNode(parentWay, ni);
+        }
+        
+        protected function magicRoundabout():ControllerState {
+            if (!mouse) return this;
+            controller.map.setHighlightOnNodes(parentWay, { selectedway: false});            
+            var roundaboutAction:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout", true);
+            var len = Point.distance((firstSelected as Node).lonlatp, mouse);
+            var w: Way = new MagicRoundabout(firstSelected as Node, len, roundaboutAction.push).run();
+            MainUndoStack.getGlobalStack().addAction(roundaboutAction, true);
+            
+            return new SelectedWay(w);
         }
 
     }

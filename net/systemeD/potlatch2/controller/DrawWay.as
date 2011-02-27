@@ -181,7 +181,7 @@ package net.systemeD.potlatch2.controller {
 				case 79: /* O */			return replaceNode();
 				case 82: /* R */            repeatTags(firstSelected); return this;
 				case 70: /* F */            followWay(); return this;
-				case 77: /* M */            magicRoundabout(); return keyExitDrawing();
+				case 65: /* A */            return magicRoundabout(); 
 			}
 			var cs:ControllerState = sharedKeyboardEvents(event);
 			return cs ? cs : this;
@@ -340,13 +340,19 @@ package net.systemeD.potlatch2.controller {
 			controller.map.scrollIfNeeded(nextNode.lat,nextNode.lon);
 		}
 		
-		protected function magicRoundabout():void {
+		protected function magicRoundabout():ControllerState {
+			var n: Node = currentNode();
+            controller.map.setHighlightOnNodes(firstSelected as Way, { selectedway: false});
+			keyExitDrawing(); // stop drawing whatever we were drawing.
+			
 			// MagicRoundabout relies on actions being performed immediately. So we make a
 			// CompositeUndoableAction with the immediate flag on...
 			var roundaboutAction:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout", true);
-			new MagicRoundabout(currentNode(), elastic.length, roundaboutAction.push);
+			var w: Way = new MagicRoundabout(n, elastic.length, roundaboutAction.push).run();
             // And when we add the action to the MainUndoStack, we tell it not to do the actions again.
             MainUndoStack.getGlobalStack().addAction(roundaboutAction, true);
+            //leaveNodeSelected = false;
+            return new SelectedWay(w);
 		}
 		
 		override public function enterState():void {

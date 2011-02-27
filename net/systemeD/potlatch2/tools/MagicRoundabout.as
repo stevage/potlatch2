@@ -18,6 +18,9 @@ package net.systemeD.potlatch2.tools
 			this.radius = radius;
 			this.performAction = performAction;
 			connection = Connection.getConnectionInstance();
+		}
+		
+		public function run():Way {
 			
             var nodes: Array = makeCircle();
             var way_tags:Object = findWayTags();
@@ -31,6 +34,7 @@ package net.systemeD.potlatch2.tools
             }
             doRelations(way); // Must be after the split above, and before the splits below.
             doJunctions(way);
+            return way;
 		
         }
 		
