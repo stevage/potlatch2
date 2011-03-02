@@ -15,8 +15,8 @@ package net.systemeD.halcyon.connection {
     public class CompositeUndoableAction extends UndoableAction {
         
         public var name:String;
-        private var actions:Array = [];
-        private var actionsDone:Boolean = false;
+        protected var actions:Array = [];
+        protected var actionsDone:Boolean = false;
         private var immediateMode:Boolean = false;
 
         /**

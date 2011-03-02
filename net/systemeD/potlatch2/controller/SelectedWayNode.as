@@ -7,8 +7,8 @@ package net.systemeD.potlatch2.controller {
 	import net.systemeD.halcyon.WayUI;
 	import net.systemeD.halcyon.connection.*;
 	import net.systemeD.halcyon.connection.actions.*;
+	import net.systemeD.potlatch2.tools.MagicRoundabout;
 	import net.systemeD.potlatch2.tools.Quadrilateralise;
-    import net.systemeD.potlatch2.tools.MagicRoundabout;
 
     public class SelectedWayNode extends ControllerState {
 		private var parentWay:Way;
@@ -260,10 +260,8 @@ package net.systemeD.potlatch2.controller {
             controller.map.setHighlightOnNodes(parentWay, { selectedway: false});            
             var roundaboutAction:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout", true);
             var len:Number = Point.distance((firstSelected as Node).lonlatp, mouse);
-            var w: Way = new MagicRoundabout(firstSelected as Node, len, roundaboutAction.push).run();
-            MainUndoStack.getGlobalStack().addAction(roundaboutAction, true);
-            
-            return new SelectedWay(w);
+            var m: MagicRoundabout = new MagicRoundabout(firstSelected as Node, len, MainUndoStack.getGlobalStack().addAction);
+            return new SelectedWay(m.createdWay);
         }
 
     }
