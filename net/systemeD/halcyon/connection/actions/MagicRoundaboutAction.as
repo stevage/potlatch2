@@ -12,7 +12,7 @@ package net.systemeD.halcyon.connection.actions
         private var radius: Number;
         private var connection: Connection;
         protected var _createdWay: Way;
-        public function get createdWay() { return _createdWay; }
+        public function get createdWay():Way { return _createdWay; }
 
 		public function MagicRoundaboutAction(node: Node, radius: Number)
 		{
