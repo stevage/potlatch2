@@ -138,6 +138,11 @@ package net.systemeD.halcyon.connection {
             performAction(new RemoveNodeByIndexAction(this, nodes, index, fireEvent));
         }
 
+        public function getNodes():Array {
+            // Is it safe to just return 'nodes'? Being conservative...
+            return nodes.slice(0,nodes.length);
+        }
+
 		public function sliceNodes(start:int,end:int):Array {
 			return nodes.slice(start,end);
 		}

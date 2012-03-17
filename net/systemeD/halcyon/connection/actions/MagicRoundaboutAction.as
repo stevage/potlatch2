@@ -1,25 +1,23 @@
 package net.systemeD.halcyon.connection.actions
 {
-	import net.systemeD.halcyon.connection.CompositeUndoableAction;
-	import net.systemeD.halcyon.connection.actions.SplitWayAction;
 	import net.systemeD.halcyon.connection.*;
 	import net.systemeD.potlatch2.tools.MakeJunctions;
 
 	/** Creates a roundabout, forms junctions, removes the internal ways, and sets tags. All in one sweet action.*/
 	public class MagicRoundaboutAction extends CompositeUndoableAction
 	{
-        private var node: Node;
+        private var centre: Node;
         private var radius: Number;
         private var connection: Connection;
         protected var _createdWay: Way;
         public function get createdWay():Way { return _createdWay; }
 
-		public function MagicRoundaboutAction(node: Node, radius: Number)
+		public function MagicRoundaboutAction(centre: Node, radius: Number)
 		{
 			super('Magic roundabout');
-            this.node = node;
+            this.centre = centre;
             this.radius = radius;
-            connection = node.connection;
+            connection = centre.connection;
 		}
 		
 		private function performAction(action: UndoableAction):void { 
@@ -36,15 +34,14 @@ package net.systemeD.halcyon.connection.actions
             var nodes: Array = makeCircle();
             var way_tags:Object = findWayTags();
             
-            var way:Way = connection.createWay(way_tags, nodes, performAction);
+            _createdWay = connection.createWay(way_tags, nodes, performAction);
             // Split any ways that cross the centre of the roundabout.
-            for each (var w: Way in node.parentWays) {
-                if (!w.endsWith(node))
-                  performAction(new SplitWayAction(w, w.indexOfNode(node)));
+            for each (var w: Way in centre.parentWays) {
+                if (!w.endsWith(centre))
+                  performAction(new SplitWayAction(w, w.indexOfNode(centre)));
             }
-            doRelations(way); // Must be after the split above, and before the splits below.
-            doJunctions(way);
-            _createdWay = way;
+            doRelations(_createdWay); // Must be after the split above, and before the splits below.
+            doJunctions(_createdWay);
             actionsDone = true;
             return UndoableAction.SUCCESS;
         }
@@ -59,8 +56,8 @@ package net.systemeD.halcyon.connection.actions
             for (var a:Number = 0; a < Math.PI * 2-.0001; a += Math.PI * 2 / num_nodes) {
                 var n: Node = connection.createNode(
                    {},
-                   Node.latp2lat(node.latp + Math.sin(a) * radius), // Use latp to get round circles
-                   node.lon + Math.cos(a) * radius,
+                   Node.latp2lat(centre.latp + Math.sin(a) * radius), // Use latp to get round circles
+                   centre.lon + Math.cos(a) * radius,
                    performAction);
                 nodes.push(n); 
             }
@@ -77,7 +74,7 @@ package net.systemeD.halcyon.connection.actions
             "secondary_link", "secondary", "primary_link", "primary", "trunk_link", "trunk", "motorway_link", "motorway"];
 
             var fallback_highway_tag: String = null;
-            for each (var w: Way in node.parentWays) {
+            for each (var w: Way in centre.parentWays) {
                 max_highway = Math.max(max_highway, highway_hierarchy.indexOf(w.getTag("highway")));
                 if (w.getTag("highway")) // maybe there's a highway=cycleway or something
                    fallback_highway_tag = w.getTag("highway");
@@ -99,20 +96,42 @@ package net.systemeD.halcyon.connection.actions
            
             // Form junctions where the roundabout hits other ways.
             var junctions: Array = new MakeJunctions(way, performAction, true).run();
-            // Now find any of those ways that connected with the centre of the roundabout.
+            // Now delete any bits of ways that are inside the roundabout
             for each (var j: Node in junctions) {
-                for each (var w: Way in j.parentWays) {
-                    if (w.indexOfNode(node) < 0)
-                      continue;
-                    
-                    // Split it...
-                    performAction(new SplitWayAction(w, w.indexOfNode(j)));
-                    // Now j has three parent ways. We find the one that leads back to our home node, and delete it.
-                    for each (var w2:Way in j.parentWays) {
-                        if (w2.indexOfNode(node) >= 0) {
-                            w2.remove(performAction);
-                            break;
-                        }
+                // split ways that cross our roundabout more than once.
+                // (ways that cross just once don't need to be split - we'll just cut the extra nodes off.)
+                var i: int = 0;
+                while (i < j.parentWays.length) { // can't use for each, because we're adding to j.parentWays
+                	var w: Way = j.parentWays[i];
+                	i++;
+                	if (w == _createdWay)
+                	   continue; // don't split the roundabout!
+                	if (w.getJunctionsWith(_createdWay).length > 1 ) {
+                	   if (!w.endsWith(j)) {
+                        // this way crosses our roundabout more than once - needs to be split.
+                	       performAction(new SplitWayAction(w, w.indexOfNode(j)));
+                	       i=0; // sometimes the new way is the first parentWay, so we have to start looking all over again.
+                		} else if (w.length == 2)
+                		    // a 2-node way that touches our circle twice is by definition "inside" it, but won't be caught
+                		    // by our node-searching below.
+                		    w.remove(performAction);
+                		    
+                	}
+                }      
+                // Our junction may have different parent ways now.
+                for each (w in j.parentWays.concat(centre.parentWays)) {
+                    // Iterate on every node of every way touched by our roundabout
+                    if (w == _createdWay)
+                       continue; // don't remove nodes from the roundabout itself...
+                    var nodes:Array = w.getNodes();
+                    for each (var wn: Node in nodes) {
+                    	if (wn.hasParent(_createdWay))
+                    	   continue;
+                    	if (_createdWay.pointWithin(wn.lon, wn.lat)) {
+                            // This node is inside our roundabout: destroy it.
+                            wn.remove(performAction);
+                    		
+                    	}
                     }
                 }
             }
@@ -121,7 +140,7 @@ package net.systemeD.halcyon.connection.actions
         /** Find on connected ways, and add any that belongs to at least two ways. Only deals with "route" relations atm. */
         private function doRelations(way: Way): void{
             var relcount: Object= {};
-            for each (var w: Way in node.parentWays) {
+            for each (var w: Way in centre.parentWays) {
                 for each (var r: Relation in w.findParentRelationsOfType("route")) {
                     if (!relcount[r.id])
                        relcount[r.id]=0;
