@@ -106,16 +106,9 @@ package net.systemeD.halcyon.connection.actions
                 	i++;
                 	if (w == _createdWay)
                 	   continue; // don't split the roundabout!
-                	if (w.getJunctionsWith(_createdWay).length > 1 ) {
-                	   if (!w.endsWith(j)) {
+                	if (w.getJunctionsWith(_createdWay).length > 1 && !w.endsWith(j)) {
                         // this way crosses our roundabout more than once - needs to be split.
                 	       performAction(new SplitWayAction(w, w.indexOfNode(j)));
-                	       i=0; // sometimes the new way is the first parentWay, so we have to start looking all over again.
-                		} else if (w.length == 2)
-                		    // a 2-node way that touches our circle twice is by definition "inside" it, but won't be caught
-                		    // by our node-searching below.
-                		    w.remove(performAction);
-                		    
                 	}
                 }      
                 // Our junction may have different parent ways now.
@@ -123,6 +116,12 @@ package net.systemeD.halcyon.connection.actions
                     // Iterate on every node of every way touched by our roundabout
                     if (w == _createdWay)
                        continue; // don't remove nodes from the roundabout itself...
+
+                    if (w.getJunctionsWith(_createdWay).length == 2 && w.length == 2) {
+                       // a 2-node way that touches our circle twice is by definition "inside" it, but has no nodes to delete
+                       w.remove(performAction);
+                       continue;
+                    }                    
                     var nodes:Array = w.getNodes();
                     for each (var wn: Node in nodes) {
                     	if (wn.hasParent(_createdWay))
