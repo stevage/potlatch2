@@ -9,8 +9,8 @@ package net.systemeD.halcyon.connection.actions
         private var centre: Node;
         private var radius: Number;
         private var connection: Connection;
-        protected var _createdWay: Way;
-        public function get createdWay():Way { return _createdWay; }
+        protected var roundabout: Way;
+        public function get createdWay():Way { return roundabout; }
 
 		public function MagicRoundaboutAction(centre: Node, radius: Number)
 		{
@@ -31,21 +31,19 @@ package net.systemeD.halcyon.connection.actions
             	return super.doAction();
             }
                 
-            var nodes: Array = makeCircle();
-            var way_tags:Object = findWayTags();
-            
-            _createdWay = connection.createWay(way_tags, nodes, performAction);
+            roundabout = connection.createWay(findWayTags(), makeCircle(), performAction);
             // Split any ways that cross the centre of the roundabout.
             for each (var w: Way in centre.parentWays) {
                 if (!w.endsWith(centre))
                   performAction(new SplitWayAction(w, w.indexOfNode(centre)));
             }
-            doRelations(_createdWay); // Must be after the split above, and before the splits below.
-            doJunctions(_createdWay);
+            doRelations(); // Must be after the split above, and before the splits below.
+            doJunctions();
             actionsDone = true;
             return UndoableAction.SUCCESS;
         }
         
+        /** Return an array of nodes forming the shape of the roundabout. */
         private function makeCircle():Array {
             // Pick a number of nodes vaguely in proportion to the size of circle
             // This should really be linear but someone will complain about huge numbers of nodes being created. 
@@ -63,7 +61,6 @@ package net.systemeD.halcyon.connection.actions
             }
             nodes.push(nodes[0]); // join the loop
             nodes = nodes.reverse(); // TODO get the direction right in both halves of the world
-            /* Work out what tags to put on the roundabout. Basically, the highest level road touching the node we started from. */
             return nodes;
         }
         
@@ -92,10 +89,10 @@ package net.systemeD.halcyon.connection.actions
         }
         
         /** Locate intersections with any roads, and split and remove those inside the roundabout. */
-        private function doJunctions(way: Way):void {
+        private function doJunctions():void {
            
             // Form junctions where the roundabout hits other ways.
-            var junctions: Array = new MakeJunctions(way, performAction, true).run();
+            var junctions: Array = new MakeJunctions(roundabout, performAction, true).run();
             // Now delete any bits of ways that are inside the roundabout
             for each (var j: Node in junctions) {
                 // split ways that cross our roundabout more than once.
@@ -104,9 +101,9 @@ package net.systemeD.halcyon.connection.actions
                 while (i < j.parentWays.length) { // can't use for each, because we're adding to j.parentWays
                 	var w: Way = j.parentWays[i];
                 	i++;
-                	if (w == _createdWay)
+                	if (w == roundabout)
                 	   continue; // don't split the roundabout!
-                	if (w.getJunctionsWith(_createdWay).length > 1 && !w.endsWith(j)) {
+                	if (w.getJunctionsWith(roundabout).length > 1 && !w.endsWith(j)) {
                         // this way crosses our roundabout more than once - needs to be split.
                 	       performAction(new SplitWayAction(w, w.indexOfNode(j)));
                 	}
@@ -114,19 +111,19 @@ package net.systemeD.halcyon.connection.actions
                 // Our junction may have different parent ways now.
                 for each (w in j.parentWays.concat(centre.parentWays)) {
                     // Iterate on every node of every way touched by our roundabout
-                    if (w == _createdWay)
+                    if (w == roundabout)
                        continue; // don't remove nodes from the roundabout itself...
 
-                    if (w.getJunctionsWith(_createdWay).length == 2 && w.length == 2) {
+                    if (w.getJunctionsWith(roundabout).length == 2 && w.length == 2) {
                        // a 2-node way that touches our circle twice is by definition "inside" it, but has no nodes to delete
                        w.remove(performAction);
                        continue;
                     }                    
                     var nodes:Array = w.getNodes();
                     for each (var wn: Node in nodes) {
-                    	if (wn.hasParent(_createdWay))
+                    	if (wn.hasParent(roundabout))
                     	   continue;
-                    	if (_createdWay.pointWithin(wn.lon, wn.lat)) {
+                    	if (roundabout.pointWithin(wn.lon, wn.lat)) {
                             // This node is inside our roundabout: destroy it.
                             wn.remove(performAction);
                     		
@@ -137,7 +134,7 @@ package net.systemeD.halcyon.connection.actions
         }
         
         /** Find on connected ways, and add any that belongs to at least two ways. Only deals with "route" relations atm. */
-        private function doRelations(way: Way): void{
+        private function doRelations(): void{
             var relcount: Object= {};
             for each (var w: Way in centre.parentWays) {
                 for each (var r: Relation in w.findParentRelationsOfType("route")) {
@@ -148,7 +145,7 @@ package net.systemeD.halcyon.connection.actions
             }
             for (var rid: String in relcount) {
                 if (relcount[rid] >= 2) {
-                    connection.getRelation(new Number(rid)).insertMember(0, new RelationMember(way, "" /* ?! */), performAction);
+                    connection.getRelation(new Number(rid)).insertMember(0, new RelationMember(roundabout, "" /* ?! */), performAction);
                 }
             }
         }
