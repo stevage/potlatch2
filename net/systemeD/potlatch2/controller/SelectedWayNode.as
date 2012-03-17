@@ -257,7 +257,8 @@ package net.systemeD.potlatch2.controller {
         
         protected function magicRoundabout():ControllerState {
             if (!mouse) return this;
-            controller.map.setHighlightOnNodes(parentWay, { selectedway: false});            
+
+            this.layer.setHighlightOnNodes(parentWay, { selectedway: false});            
             var roundaboutAction:CompositeUndoableAction = new CompositeUndoableAction("Magic roundabout", true);
             var len:Number = Point.distance((firstSelected as Node).lonlatp, mouse);
             var m: MagicRoundabout = new MagicRoundabout(firstSelected as Node, len, MainUndoStack.getGlobalStack().addAction);

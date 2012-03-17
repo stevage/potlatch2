@@ -342,7 +342,7 @@ package net.systemeD.potlatch2.controller {
 		
 		protected function magicRoundabout():ControllerState {
 			var n: Node = currentNode();
-            controller.map.setHighlightOnNodes(firstSelected as Way, { selectedway: false});
+            layer.setHighlightOnNodes(firstSelected as Way, { selectedway: false});
 			keyExitDrawing(); // stop drawing whatever we were drawing.
 			var m: MagicRoundabout = new MagicRoundabout(n, elastic.length, MainUndoStack.getGlobalStack().addAction);
             return new SelectedWay(m.createdWay);

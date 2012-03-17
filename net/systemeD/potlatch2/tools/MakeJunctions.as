@@ -20,6 +20,7 @@ package net.systemeD.potlatch2.tools {
 		 * cases. */
 		public function MakeJunctions(initWay: Way, performAction: Function, initOnlyTransportTags: Boolean = true) {
 			way = initWay;
+			connection = way.connection;
 			onlyTransportTags = initOnlyTransportTags;
 			this.performAction = performAction;
 		}
@@ -49,7 +50,6 @@ package net.systemeD.potlatch2.tools {
 		
 		/** Pre-fetch all the ways that the target way could cross, and filter them down if necessary. */
 		protected function fetchWays():void {
-			connection = Connection.getConnectionInstance();
             var r:Rectangle = way.boundingBox;
             allWays = connection.getObjectsByBbox(r.x, r.x+r.width, r.y, r.y-r.height, true, false).waysInside;
             // probably user only wants junctions between roads and similar. the list below is not comprehensive.

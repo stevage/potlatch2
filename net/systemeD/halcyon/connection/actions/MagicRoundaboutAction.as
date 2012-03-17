@@ -19,7 +19,7 @@ package net.systemeD.halcyon.connection.actions
 			super('Magic roundabout');
             this.node = node;
             this.radius = radius;
-            connection = Connection.getConnectionInstance();
+            connection = node.connection;
 		}
 		
 		private function performAction(action: UndoableAction):void { 

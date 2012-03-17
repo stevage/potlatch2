@@ -148,7 +148,7 @@ package net.systemeD.potlatch2.controller {
             
             // And when we add the action to the MainUndoStack, we tell it not to do the actions again.
             MainUndoStack.getGlobalStack().addAction(junctionsAction, true);
-        	controller.map.setHighlightOnNodes(firstSelected as Way, { selectedway: true });
+        	this.layer.setHighlightOnNodes(firstSelected as Way, { selectedway: true });
         	return this;
         }
 
