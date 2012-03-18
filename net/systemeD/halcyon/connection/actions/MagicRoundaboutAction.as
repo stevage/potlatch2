@@ -2,7 +2,6 @@ package net.systemeD.halcyon.connection.actions
 {
 	import net.systemeD.halcyon.connection.*;
 	import net.systemeD.potlatch2.tools.MakeJunctions;
-
 	/** Creates a roundabout, forms junctions, removes the internal ways, and sets tags. All in one sweet action.*/
 	public class MagicRoundaboutAction extends CompositeUndoableAction
 	{
@@ -92,7 +91,9 @@ package net.systemeD.halcyon.connection.actions
         private function doJunctions():void {
            
             // Form junctions where the roundabout hits other ways.
-            var junctions: Array = new MakeJunctions(roundabout, performAction, true).run();
+            var mja:MakeJunctionsAction = new MakeJunctionsAction(roundabout, true);
+            performAction(mja);
+            var junctions: Array = mja.getComputedJunctions();
             // Now delete any bits of ways that are inside the roundabout
             for each (var j: Node in junctions) {
                 // split ways that cross our roundabout more than once.

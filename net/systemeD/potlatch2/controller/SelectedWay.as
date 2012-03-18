@@ -1,14 +1,14 @@
 package net.systemeD.potlatch2.controller {
 	import flash.display.*;
 	import flash.events.*;
-	import flash.geom.Point;
-	import flash.ui.Keyboard;
+    import flash.geom.Point;
+    import flash.ui.Keyboard;
 	
 	import net.systemeD.halcyon.MapPaint;
 	import net.systemeD.halcyon.connection.*;
-	import net.systemeD.potlatch2.tools.Quadrilateralise;
-    import net.systemeD.potlatch2.tools.Simplify;
 	import net.systemeD.potlatch2.tools.MakeJunctions;
+	import net.systemeD.potlatch2.tools.Quadrilateralise;
+	import net.systemeD.potlatch2.tools.Simplify;
 
     /** Behaviour that takes place while a way is selected includes: adding a node to the way, straightening/reshaping the way, dragging it. */
     public class SelectedWay extends ControllerState {
@@ -143,11 +143,8 @@ package net.systemeD.potlatch2.controller {
         private function addJunctions():ControllerState {
         	// TODO if two junctions are selected, only look for intersections between those two
 
-            var junctionsAction:CompositeUndoableAction = new CompositeUndoableAction("Make junctions", true);
-            new MakeJunctions(firstSelected as Way, junctionsAction.push).run();
+            var mj:MakeJunctions = new MakeJunctions(firstSelected as Way, false, MainUndoStack.getGlobalStack().addAction);
             
-            // And when we add the action to the MainUndoStack, we tell it not to do the actions again.
-            MainUndoStack.getGlobalStack().addAction(junctionsAction, true);
         	this.layer.setHighlightOnNodes(firstSelected as Way, { selectedway: true });
         	return this;
         }
