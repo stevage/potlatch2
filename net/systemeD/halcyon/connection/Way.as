@@ -401,7 +401,7 @@ package net.systemeD.halcyon.connection {
 		public function getJunctionsWith(way2: Way): Array {
 			var js: Array = [];
 			for (var i:uint = 0; i < length; i++) {
-				if (way2.indexOfNode(nodes[i]) > 0) {
+				if (way2.indexOfNode(nodes[i]) >= 0) {
 					js.push(nodes[i]);
 				}
 			}
